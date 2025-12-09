@@ -13,6 +13,7 @@ import Sparkle
 enum UpdateState: Equatable {
     case idle
     case checking
+    case upToDate
     case found(version: String, releaseNotes: String?)
     case downloading(progress: Double)  // 0.0 to 1.0
     case extracting(progress: Double)
@@ -22,7 +23,7 @@ enum UpdateState: Equatable {
 
     var isActive: Bool {
         switch self {
-        case .idle, .error:
+        case .idle, .upToDate, .error:
             return false
         default:
             return true
@@ -36,6 +37,8 @@ class UpdateManager: NSObject, ObservableObject {
     static let shared = UpdateManager()
 
     @Published var state: UpdateState = .idle
+    @Published var hasUnseenUpdate: Bool = false
+    private var hasSeenUpdateThisSession: Bool = false
 
     private var downloadedBytes: Int64 = 0
     private var expectedBytes: Int64 = 0
@@ -53,7 +56,11 @@ class UpdateManager: NSObject, ObservableObject {
 
     func checkForUpdates() {
         state = .checking
-        AppDelegate.shared?.updater.checkForUpdatesInBackground()
+        if let updater = AppDelegate.shared?.updater {
+            updater.checkForUpdates()
+        } else {
+            state = .error(message: "Updater not initialized")
+        }
     }
 
     func downloadAndInstall() {
@@ -85,6 +92,15 @@ class UpdateManager: NSObject, ObservableObject {
         self.currentVersion = version
         self.installHandler = installHandler
         self.state = .found(version: version, releaseNotes: releaseNotes)
+        // Only show the dot if user hasn't seen it this session
+        if !hasSeenUpdateThisSession {
+            self.hasUnseenUpdate = true
+        }
+    }
+
+    func markUpdateSeen() {
+        self.hasUnseenUpdate = false
+        self.hasSeenUpdateThisSession = true
     }
 
     func downloadStarted(cancellation: @escaping () -> Void) {
@@ -126,7 +142,14 @@ class UpdateManager: NSObject, ObservableObject {
     }
 
     func noUpdateFound() {
-        self.state = .idle
+        self.state = .upToDate
+        // Reset to idle after a few seconds
+        Task {
+            try? await Task.sleep(for: .seconds(5))
+            if case .upToDate = self.state {
+                self.state = .idle
+            }
+        }
     }
 
     func updateError(_ message: String) {
@@ -134,6 +157,10 @@ class UpdateManager: NSObject, ObservableObject {
     }
 
     func dismiss() {
+        // Don't dismiss if we're showing "up to date" - let it display
+        if case .upToDate = state {
+            return
+        }
         self.state = .idle
         self.installHandler = nil
         self.cancellationHandler = nil

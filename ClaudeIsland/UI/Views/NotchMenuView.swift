@@ -187,6 +187,16 @@ struct UpdateRow: View {
                 .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.4))
 
+        case .upToDate:
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundColor(TerminalColors.green)
+                Text("Up to date")
+                    .font(.system(size: 11))
+                    .foregroundColor(TerminalColors.green)
+            }
+
         case .checking, .installing:
             ProgressView()
                 .scaleEffect(0.5)
@@ -249,6 +259,8 @@ struct UpdateRow: View {
             return "arrow.down.circle"
         case .checking:
             return "arrow.down.circle"
+        case .upToDate:
+            return "checkmark.circle.fill"
         case .found:
             return "arrow.down.circle.fill"
         case .downloading:
@@ -270,6 +282,8 @@ struct UpdateRow: View {
             return .white.opacity(isHovered ? 1.0 : 0.7)
         case .checking:
             return .white.opacity(0.7)
+        case .upToDate:
+            return TerminalColors.green
         case .found, .readyToInstall:
             return TerminalColors.green
         case .downloading:
@@ -289,6 +303,8 @@ struct UpdateRow: View {
             return "Check for Updates"
         case .checking:
             return "Checking..."
+        case .upToDate:
+            return "Check for Updates"
         case .found:
             return "Download Update"
         case .downloading:
@@ -306,7 +322,7 @@ struct UpdateRow: View {
 
     private var labelColor: Color {
         switch updateManager.state {
-        case .idle:
+        case .idle, .upToDate:
             return .white.opacity(isHovered ? 1.0 : 0.7)
         case .checking, .downloading, .extracting, .installing:
             return .white.opacity(0.9)
@@ -319,7 +335,7 @@ struct UpdateRow: View {
 
     private var isInteractive: Bool {
         switch updateManager.state {
-        case .idle, .found, .readyToInstall, .error:
+        case .idle, .upToDate, .found, .readyToInstall, .error:
             return true
         case .checking, .downloading, .extracting, .installing:
             return false
@@ -330,7 +346,7 @@ struct UpdateRow: View {
 
     private func handleTap() {
         switch updateManager.state {
-        case .idle, .error:
+        case .idle, .upToDate, .error:
             updateManager.checkForUpdates()
         case .found:
             updateManager.downloadAndInstall()

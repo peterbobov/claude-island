@@ -80,9 +80,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleScreenChange()
         }
 
+        // Check for updates on launch
+        if updater.canCheckForUpdates {
+            updater.checkForUpdates()
+        }
+
         // Check for updates every hour
         updateCheckTimer = Timer.scheduledTimer(withTimeInterval: 3600, repeats: true) { [weak self] _ in
-            self?.updater.checkForUpdatesInBackground()
+            guard let updater = self?.updater, updater.canCheckForUpdates else { return }
+            updater.checkForUpdates()
         }
     }
 
