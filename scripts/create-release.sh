@@ -90,6 +90,12 @@ echo "=== Step 2: Creating DMG ==="
 
 DMG_PATH="$RELEASE_DIR/$APP_NAME-$VERSION.dmg"
 
+# Remove existing DMG if present
+if [ -f "$DMG_PATH" ]; then
+    echo "Removing existing DMG..."
+    rm -f "$DMG_PATH"
+fi
+
 # Check if create-dmg is available (prettier DMG)
 if command -v create-dmg &> /dev/null; then
     echo "Using create-dmg for prettier output..."
@@ -101,21 +107,7 @@ if command -v create-dmg &> /dev/null; then
         --app-drop-link 450 200 \
         --hide-extension "Claude Island.app" \
         "$DMG_PATH" \
-        "$APP_PATH" || true
-
-    # create-dmg returns error if DMG already exists, check if it worked
-    if [ ! -f "$DMG_PATH" ]; then
-        rm -f "$DMG_PATH"
-        create-dmg \
-            --volname "Claude Island" \
-            --window-size 600 400 \
-            --icon-size 100 \
-            --icon "Claude Island.app" 150 200 \
-            --app-drop-link 450 200 \
-            --hide-extension "Claude Island.app" \
-            "$DMG_PATH" \
-            "$APP_PATH"
-    fi
+        "$APP_PATH"
 else
     echo "Using hdiutil (install create-dmg for prettier DMG: brew install create-dmg)"
     hdiutil create -volname "Claude Island" \

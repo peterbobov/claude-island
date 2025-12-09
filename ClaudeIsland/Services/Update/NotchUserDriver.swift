@@ -180,7 +180,9 @@ class NotchUserDriver: NSObject, SPUUserDriver {
     }
 
     func showUserInitiatedUpdateCheck(cancellation: @escaping () -> Void) {
-        // User started a check - just let it proceed
+        Task { @MainActor in
+            UpdateManager.shared.state = .checking
+        }
     }
 
     func showUpdateFound(with appcastItem: SUAppcastItem, state: SPUUserUpdateState, reply: @escaping (SPUUserUpdateChoice) -> Void) {
