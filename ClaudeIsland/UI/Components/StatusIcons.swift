@@ -286,3 +286,31 @@ struct StatusIcon: View {
         }
     }
 }
+
+// MARK: - External Monitor Indicator
+/// Fun colorful "ULTRATHINK" text shown on external monitors (no notch)
+struct ExternalMonitorIndicator: View {
+    // Vibrant colors matching the reference image
+    private let letterColors: [Color] = [
+        Color(red: 0.92, green: 0.26, blue: 0.21),  // U - Red
+        Color(red: 0.96, green: 0.49, blue: 0.00),  // L - Orange
+        Color(red: 0.98, green: 0.82, blue: 0.01),  // T - Yellow
+        Color(red: 0.30, green: 0.69, blue: 0.31),  // R - Green
+        Color(red: 0.01, green: 0.66, blue: 0.96),  // A - Cyan
+        Color(red: 0.25, green: 0.32, blue: 0.71),  // T - Blue
+        Color(red: 0.61, green: 0.15, blue: 0.69),  // H - Purple
+        Color(red: 0.91, green: 0.12, blue: 0.39),  // I - Pink
+        Color(red: 0.96, green: 0.38, blue: 0.08),  // N - Orange-Red
+        Color(red: 0.18, green: 0.80, blue: 0.44),  // K - Bright Green
+    ]
+
+    var body: some View {
+        HStack(spacing: 1) {
+            ForEach(Array("ULTRATHINK".enumerated()), id: \.offset) { index, char in
+                Text(String(char))
+                    .font(.system(size: 14, weight: .black, design: .default))
+                    .foregroundColor(letterColors[index])
+            }
+        }
+    }
+}

@@ -20,11 +20,18 @@ struct NotchView: View {
     @StateObject private var sessionMonitor = ClaudeSessionMonitor()
     @StateObject private var activityCoordinator = NotchActivityCoordinator.shared
     @ObservedObject private var updateManager = UpdateManager.shared
+    @ObservedObject private var screenSelector = ScreenSelector.shared
     @State private var previousPendingIds: Set<String> = []
     @State private var isVisible: Bool = false
     @State private var isHovering: Bool = false
 
     @Namespace private var activityNamespace
+
+    /// Whether the current screen has a physical notch
+    private var hasPhysicalNotch: Bool {
+        guard let screen = screenSelector.selectedScreen else { return true }
+        return screen.safeAreaInsets.top > 0
+    }
 
     /// Whether any Claude session is currently processing or compacting
     private var isAnyProcessing: Bool {
@@ -169,6 +176,10 @@ struct NotchView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             sessionMonitor.startMonitoring()
+            // On external monitors (no notch), always start visible
+            if !hasPhysicalNotch {
+                isVisible = true
+            }
         }
         .onChange(of: viewModel.status) { oldStatus, newStatus in
             handleStatusChange(from: oldStatus, to: newStatus)
@@ -249,10 +260,17 @@ struct NotchView: View {
                 // Opened: show header content
                 openedHeaderContent
             } else if !showClosedActivity {
-                // Closed without activity: empty space
-                Rectangle()
-                    .fill(.clear)
-                    .frame(width: closedNotchSize.width - 20)
+                // Closed without activity
+                if hasPhysicalNotch {
+                    // On notched display: invisible (blends with physical notch)
+                    Rectangle()
+                        .fill(.clear)
+                        .frame(width: closedNotchSize.width - 20)
+                } else {
+                    // On external monitor: show colorful "ULTRATHINK" text
+                    ExternalMonitorIndicator()
+                        .frame(width: closedNotchSize.width - 20)
+                }
             } else {
                 // Closed with activity: black spacer
                 Rectangle()
@@ -358,6 +376,12 @@ struct NotchView: View {
             // Hide activity when done
             activityCoordinator.hideActivity()
 
+            // On external monitors (no notch), always stay visible
+            if !hasPhysicalNotch {
+                isVisible = true
+                return
+            }
+
             // Delay hiding the notch until animation completes
             if viewModel.status == .closed {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -374,6 +398,11 @@ struct NotchView: View {
         case .opened, .popping:
             isVisible = true
         case .closed:
+            // On external monitors (no notch), always stay visible
+            if !hasPhysicalNotch {
+                isVisible = true
+                return
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
                 if viewModel.status == .closed && !isAnyProcessing && !hasPendingPermission && !activityCoordinator.expandingActivity.show {
                     isVisible = false
