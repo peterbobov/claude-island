@@ -17,6 +17,7 @@ import Sparkle
 struct NotchMenuView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject private var updateManager = UpdateManager.shared
+    @ObservedObject private var screenSelector = ScreenSelector.shared
     @State private var hooksInstalled: Bool = false
     @State private var launchAtLogin: Bool = false
 
@@ -71,6 +72,9 @@ struct NotchMenuView: View {
                 }
             }
 
+            // Screen selection
+            ScreenPickerRow(screenSelector: screenSelector)
+
             Divider()
                 .background(Color.white.opacity(0.08))
                 .padding(.vertical, 4)
@@ -116,6 +120,7 @@ struct NotchMenuView: View {
     private func refreshStates() {
         hooksInstalled = HookInstaller.isInstalled()
         launchAtLogin = SMAppService.mainApp.status == .enabled
+        screenSelector.refreshScreens()
     }
 }
 

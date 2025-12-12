@@ -65,10 +65,10 @@ class NotchViewModel: ObservableObject {
                 height: 580
             )
         case .menu:
-            // Taller size for settings menu
+            // Dynamic height for settings menu (expands when screen picker is open)
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 400
+                height: 420 + screenSelector.expandedPickerHeight
             )
         case .instances:
             return CGSize(
@@ -89,6 +89,7 @@ class NotchViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let events = EventMonitors.shared
     private var hoverTimer: DispatchWorkItem?
+    private let screenSelector = ScreenSelector.shared
 
     // MARK: - Initialization
 
@@ -99,6 +100,7 @@ class NotchViewModel: ObservableObject {
             windowHeight: windowHeight
         )
         setupEventHandlers()
+        observeScreenSelector()
     }
 
     // MARK: - Event Handling
@@ -115,6 +117,15 @@ class NotchViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleMouseDown()
+            }
+            .store(in: &cancellables)
+    }
+
+    private func observeScreenSelector() {
+        screenSelector.$isPickerExpanded
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.objectWillChange.send()
             }
             .store(in: &cancellables)
     }
