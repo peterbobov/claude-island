@@ -106,6 +106,8 @@ enum SessionPhase: Sendable {
             return true  // Can become idle
         case (.waitingForInput, .compacting):
             return true
+        case (.waitingForInput, .waitingForApproval):
+            return true  // User input triggers tool needing approval
 
         // WaitingForApproval transitions
         case (.waitingForApproval, .processing):
