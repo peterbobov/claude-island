@@ -46,10 +46,16 @@ class NotchViewModel: ObservableObject {
     @Published var contentType: NotchContentType = .instances
     @Published var isHovering: Bool = false
 
+    // MARK: - Dependencies
+
+    private let screenSelector = ScreenSelector.shared
+    private let soundSelector = SoundSelector.shared
+
     // MARK: - Geometry
 
     let geometry: NotchGeometry
     let spacing: CGFloat = 12
+    let hasPhysicalNotch: Bool
 
     var deviceNotchRect: CGRect { geometry.deviceNotchRect }
     var screenRect: CGRect { geometry.screenRect }
@@ -65,10 +71,10 @@ class NotchViewModel: ObservableObject {
                 height: 580
             )
         case .menu:
-            // Dynamic height for settings menu (expands when screen picker is open)
+            // Dynamic height for settings menu (expands when pickers are open)
             return CGSize(
                 width: min(screenRect.width * 0.4, 480),
-                height: 420 + screenSelector.expandedPickerHeight
+                height: 420 + screenSelector.expandedPickerHeight + soundSelector.expandedPickerHeight
             )
         case .instances:
             return CGSize(
@@ -89,18 +95,28 @@ class NotchViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let events = EventMonitors.shared
     private var hoverTimer: DispatchWorkItem?
-    private let screenSelector = ScreenSelector.shared
 
     // MARK: - Initialization
 
-    init(deviceNotchRect: CGRect, screenRect: CGRect, windowHeight: CGFloat) {
+    init(deviceNotchRect: CGRect, screenRect: CGRect, windowHeight: CGFloat, hasPhysicalNotch: Bool) {
         self.geometry = NotchGeometry(
             deviceNotchRect: deviceNotchRect,
             screenRect: screenRect,
             windowHeight: windowHeight
         )
+        self.hasPhysicalNotch = hasPhysicalNotch
         setupEventHandlers()
-        observeScreenSelector()
+        observeSelectors()
+    }
+
+    private func observeSelectors() {
+        screenSelector.$isPickerExpanded
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
+
+        soundSelector.$isPickerExpanded
+            .sink { [weak self] _ in self?.objectWillChange.send() }
+            .store(in: &cancellables)
     }
 
     // MARK: - Event Handling
@@ -117,15 +133,6 @@ class NotchViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.handleMouseDown()
-            }
-            .store(in: &cancellables)
-    }
-
-    private func observeScreenSelector() {
-        screenSelector.$isPickerExpanded
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.objectWillChange.send()
             }
             .store(in: &cancellables)
     }

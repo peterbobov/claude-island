@@ -11,13 +11,13 @@ import SwiftUI
 import ServiceManagement
 import Sparkle
 
-
 // MARK: - NotchMenuView
 
 struct NotchMenuView: View {
     @ObservedObject var viewModel: NotchViewModel
     @ObservedObject private var updateManager = UpdateManager.shared
     @ObservedObject private var screenSelector = ScreenSelector.shared
+    @ObservedObject private var soundSelector = SoundSelector.shared
     @State private var hooksInstalled: Bool = false
     @State private var launchAtLogin: Bool = false
 
@@ -35,25 +35,15 @@ struct NotchMenuView: View {
                 .background(Color.white.opacity(0.08))
                 .padding(.vertical, 4)
 
-            // Accessibility permission row - check live every render
-            AccessibilityRow(isEnabled: AXIsProcessTrusted())
+            // Appearance settings
+            ScreenPickerRow(screenSelector: screenSelector)
+            SoundPickerRow(soundSelector: soundSelector)
 
-            // Hooks toggle
-            MenuToggleRow(
-                icon: "arrow.triangle.2.circlepath",
-                label: "Hooks",
-                isOn: hooksInstalled
-            ) {
-                if hooksInstalled {
-                    HookInstaller.uninstall()
-                    hooksInstalled = false
-                } else {
-                    HookInstaller.installIfNeeded()
-                    hooksInstalled = true
-                }
-            }
+            Divider()
+                .background(Color.white.opacity(0.08))
+                .padding(.vertical, 4)
 
-            // Launch at Login toggle
+            // System settings
             MenuToggleRow(
                 icon: "power",
                 label: "Launch at Login",
@@ -72,14 +62,29 @@ struct NotchMenuView: View {
                 }
             }
 
-            // Screen selection
-            ScreenPickerRow(screenSelector: screenSelector)
+            MenuToggleRow(
+                icon: "arrow.triangle.2.circlepath",
+                label: "Hooks",
+                isOn: hooksInstalled
+            ) {
+                if hooksInstalled {
+                    HookInstaller.uninstall()
+                    hooksInstalled = false
+                } else {
+                    HookInstaller.installIfNeeded()
+                    hooksInstalled = true
+                }
+            }
+
+            AccessibilityRow(isEnabled: AXIsProcessTrusted())
 
             Divider()
                 .background(Color.white.opacity(0.08))
                 .padding(.vertical, 4)
 
-            // GitHub link
+            // About
+            UpdateRow(updateManager: updateManager)
+
             MenuRow(
                 icon: "star",
                 label: "Star on GitHub"
@@ -88,9 +93,6 @@ struct NotchMenuView: View {
                     NSWorkspace.shared.open(url)
                 }
             }
-
-            // Update row
-            UpdateRow(updateManager: updateManager)
 
             Divider()
                 .background(Color.white.opacity(0.08))

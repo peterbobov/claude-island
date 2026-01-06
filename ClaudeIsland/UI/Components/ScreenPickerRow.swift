@@ -77,8 +77,7 @@ struct ScreenPickerRow: View {
                         ScreenOptionRow(
                             label: screen.localizedName,
                             sublabel: screenSublabel(for: screen),
-                            isSelected: screenSelector.selectionMode != .automatic &&
-                                       screenSelector.isSelected(screen)
+                            isSelected: screenSelector.isSelected(screen)
                         ) {
                             screenSelector.selectScreen(screen)
                             triggerWindowRecreation()
@@ -120,6 +119,7 @@ struct ScreenPickerRow: View {
     }
 
     private func triggerWindowRecreation() {
+        // Notify to recreate the window
         NotificationCenter.default.post(
             name: NSApplication.didChangeScreenParametersNotification,
             object: nil
