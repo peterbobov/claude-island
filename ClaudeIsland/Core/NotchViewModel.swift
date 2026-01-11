@@ -138,7 +138,7 @@ class NotchViewModel: ObservableObject {
     }
 
     /// Whether we're in chat mode (sticky behavior)
-    private var isInChatMode: Bool {
+    var isInChatMode: Bool {
         if case .chat = contentType { return true }
         return false
     }
@@ -202,8 +202,8 @@ class NotchViewModel: ObservableObject {
                 notchClose()
                 // Re-post the click so it reaches the window/app behind us
                 repostClickAt(location)
-            } else if geometry.notchScreenRect.contains(location) {
-                // Clicking notch while opened - only close if NOT in chat mode
+            } else if geometry.isPointInNotch(location) {
+                // Clicking notch area while opened - close if NOT in chat mode
                 if !isInChatMode {
                     notchClose()
                 }

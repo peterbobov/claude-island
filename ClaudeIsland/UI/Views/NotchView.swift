@@ -174,11 +174,8 @@ struct NotchView: View {
                             isHovering = hovering
                         }
                     }
-                    .onTapGesture {
-                        if viewModel.status != .opened {
-                            viewModel.notchOpen(reason: .click)
-                        }
-                    }
+                    // Click handling is done via handleMouseDown() in NotchViewModel
+                    // using global/local event monitors - no onTapGesture needed
             }
         }
         .opacity(isVisible ? 1 : 0)
